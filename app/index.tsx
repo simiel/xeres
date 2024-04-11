@@ -42,6 +42,7 @@ const Page = () => {
           href={'/signup'}
           style={[defaultStyles.pillButton, { backgroundColor: '#fff' }]}
           asChild
+          // replace
         >
           <TouchableOpacity>
             <Text style={{ fontSize: 22, fontWeight: '500' }}>Sign Up</Text>
