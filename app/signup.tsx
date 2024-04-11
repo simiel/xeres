@@ -10,13 +10,38 @@ import {
 import React, { useState } from 'react';
 import { defaultStyles } from '@/constants/Styles';
 import Colors from '@/constants/Colors';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import { isClerkAPIResponseError, useSignUp } from '@clerk/clerk-expo';
 
 const Page = () => {
+  const router = useRouter();
   const [countryCode, setCountryCode] = useState('+233');
   const [phoneNumber, setPhoneNumber] = useState('');
   const keyboardVerticalOffset = Platform.OS === 'ios' ? 90 : 0;
-  const onSignup = async () => {};
+  const { signUp } = useSignUp();
+
+  const onSignup = async () => {
+    const fullPhoneNumber = `${countryCode}${phoneNumber}`;
+    try {
+      console.log('🚀 ~ onSignup ~ fullPhoneNumber:', fullPhoneNumber);
+
+      await signUp!.create({
+        phoneNumber: fullPhoneNumber,
+      });
+
+      signUp!.preparePhoneNumberVerification();
+
+      router.push({
+        pathname: '/verify/[phone]',
+        params: { phone: fullPhoneNumber },
+      });
+    } catch (error) {
+      console.log('Error signing up:', error);
+      if (isClerkAPIResponseError(error)) {
+        console.log('Error signing up:', error.errors[0].message);
+      }
+    }
+  };
 
   return (
     <KeyboardAvoidingView

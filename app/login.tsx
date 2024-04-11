@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import React, { useState } from 'react';
 import { defaultStyles } from '@/constants/Styles';
 import Colors from '@/constants/Colors';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { isClerkAPIResponseError, useSignIn } from '@clerk/clerk-expo';
 
 enum SignInType {
   Phone,
@@ -21,6 +23,8 @@ enum SignInType {
 }
 
 const Page = () => {
+  const router = useRouter();
+  const { signIn } = useSignIn();
   const [countryCode, setCountryCode] = useState('+233');
   const [phoneNumber, setPhoneNumber] = useState('');
   const keyboardVerticalOffset = Platform.OS === 'ios' ? 90 : 0;
@@ -28,7 +32,40 @@ const Page = () => {
     // case statement
     switch (type) {
       case SignInType.Phone:
-        console.log('Sign in with phone number');
+        try {
+          const fullPhoneNumber = `${countryCode}${phoneNumber}`;
+
+          const { supportedFirstFactors } = await signIn!.create({
+            identifier: fullPhoneNumber,
+          });
+
+          const firstPhoneFactor: any = supportedFirstFactors.find(
+            (factor: any) => factor.strategy === 'phone_code'
+          );
+
+          const { phoneNumberId } = firstPhoneFactor;
+
+          await signIn!.prepareFirstFactor({
+            strategy: 'phone_code',
+            phoneNumberId,
+          });
+
+          router.push({
+            pathname: '/verify/[phone]',
+            params: {
+              phone: fullPhoneNumber,
+              signin: 'true',
+            },
+          });
+        } catch (err) {
+          console.error('error', JSON.stringify(err, null, 2));
+
+          if (isClerkAPIResponseError(err)) {
+            if (err.errors[0].code === 'form_identifier_not_found') {
+              Alert.alert('Error', 'Phone number not found');
+            }
+          }
+        }
         break;
       case SignInType.Email:
         console.log('Sign in with email');
