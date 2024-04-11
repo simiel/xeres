@@ -17,6 +17,7 @@ export const defaultStyles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   textLink: {
     color: Colors.primary,
