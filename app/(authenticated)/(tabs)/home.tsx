@@ -41,7 +41,7 @@ const Page = () => {
         {transactions.length === 0 && <Text>No transactions yet</Text>}
         {transactions
           // .sort((a, b) => b.date.getMilliseconds() - a.date.getMilliseconds())
-          .reverse()
+          // .reverse()
           .map((transaction) => (
             <View key={transaction.id} style={styles.row}>
               {
