@@ -4,23 +4,50 @@ import {
   SectionList,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '@/constants/Colors';
 import { useQuery } from '@tanstack/react-query';
 import { defaultStyles } from '@/constants/Styles';
+import { CartesianChart, Line, useChartPressState } from 'victory-native';
+import { Circle, useFont } from '@shopify/react-native-skia';
+import { format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  SharedValue,
+  useAnimatedProps,
+} from 'react-native-reanimated';
+
+Animated.addWhitelistedNativeProps({ text: true });
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 const categories = ['Overview', 'Markets', 'Transactions', 'Holders', 'Social'];
+
+function Tooltip({ x, y }: { x: SharedValue<number>; y: SharedValue<number> }) {
+  return <Circle cx={x} cy={y} r={8} color={Colors.primary} />;
+}
 
 const Page = () => {
   const headerHeight = useHeaderHeight();
   const { id } = useLocalSearchParams();
   const [activeIndex, setActiveIndex] = React.useState(0);
+  const font = useFont(require('@/assets/fonts/SpaceMono-Regular.ttf'));
+  const { state, isActive } = useChartPressState({ x: 0, y: { price: 0 } });
+
+  useEffect(() => {
+    if (isActive) {
+      console.log('Pressed on', state, isActive);
+      Haptics.selectionAsync();
+    }
+    console.log('🚀 ~ useEffect ~ isActive:', isActive);
+  }, [isActive]);
 
   const { data } = useQuery({
     queryKey: ['logo', id],
@@ -29,6 +56,27 @@ const Page = () => {
       //   const logo = info[+id].logo;
       return info[+id];
     },
+  });
+
+  const { data: tickers } = useQuery({
+    queryKey: ['tickers'],
+    queryFn: async (): Promise<any[]> =>
+      fetch(`/api/tickers`).then((res) => res.json()),
+  });
+
+  const AnimatedText = useAnimatedProps(() => {
+    return {
+      text: `GHS ${state.y.price.value.value.toFixed(2)} `,
+      defaultValue: `GHS ${state.y.price.value.value.toFixed(2)} `,
+    };
+  });
+
+  const AnimatedDateText = useAnimatedProps(() => {
+    const date = new Date(state.x.value.value);
+    return {
+      text: `${date.toLocaleDateString()}`,
+      defaultValue: `${date.toLocaleDateString()}`,
+    };
   });
 
   return (
@@ -143,7 +191,89 @@ const Page = () => {
             ))}
           </ScrollView>
         )}
-        renderItem={({ item }) => <></>}
+        renderItem={({ item }) => (
+          <>
+            <View style={[defaultStyles.block, { height: 300 }]}>
+              {tickers && (
+                <>
+                  {!isActive && (
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 30,
+                          fontWeight: 'bold',
+                          color: Colors.dark,
+                        }}
+                      >
+                        GHS {tickers![tickers!.length - 1].price.toFixed(2)}
+                      </Text>
+                      <Text style={{ fontSize: 18, color: Colors.gray }}>
+                        Today
+                      </Text>
+                    </View>
+                  )}
+
+                  {isActive && (
+                    <View>
+                      <AnimatedTextInput
+                        style={{
+                          fontSize: 30,
+                          fontWeight: 'bold',
+                          color: Colors.dark,
+                        }}
+                        editable={false}
+                        animatedProps={AnimatedText}
+                      ></AnimatedTextInput>
+                      <AnimatedTextInput
+                        style={{
+                          fontSize: 30,
+                          fontWeight: 'bold',
+                          color: Colors.dark,
+                        }}
+                        editable={false}
+                        animatedProps={AnimatedDateText}
+                      ></AnimatedTextInput>
+                    </View>
+                  )}
+                  <CartesianChart
+                    data={tickers!}
+                    chartPressState={state}
+                    xKey='timestamp'
+                    yKeys={['price']}
+                    axisOptions={{
+                      font,
+                      tickCount: 5,
+                      labelOffset: { x: -2, y: 0 },
+                      labelColor: Colors.gray,
+                      formatYLabel: (v) => `GHS ${v}`,
+                      formatXLabel: (ms) => format(new Date(ms), 'MM/yy'),
+                    }}
+                  >
+                    {({ points }) => (
+                      <>
+                        <Line
+                          points={points.price}
+                          color={Colors.primary}
+                          strokeWidth={3}
+                        />
+                        {isActive && (
+                          <Tooltip
+                            x={state.x.position}
+                            y={state.y.price.position}
+                          />
+                        )}
+                      </>
+                    )}
+                  </CartesianChart>
+                </>
+              )}
+            </View>
+            <View style={[defaultStyles.block, { marginTop: 20 }]}>
+              <Text style={styles.subtitle}>Overview</Text>
+              <Text style={{ color: Colors.gray }}>{data?.description}</Text>
+            </View>
+          </>
+        )}
       ></SectionList>
     </>
   );
