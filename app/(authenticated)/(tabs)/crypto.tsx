@@ -26,17 +26,61 @@ const Page = () => {
   });
 
   return (
-    <View>
-      {currencies.data?.map((currency: Currency) => (
-        <View key={currency.id} style={{ flexDirection: 'row' }}>
-          <Image
-            source={{ uri: data?.[currency.id].logo }}
-            style={{ width: 64, height: 64 }}
-          />
-          <Text>{currency.name}</Text>
-        </View>
-      ))}
-    </View>
+    <ScrollView
+      style={[{ paddingTop: headerHeight, backgroundColor: Colors.background }]}
+    >
+      <Text style={defaultStyles.sectionHeader}>Latest GHS Crypto</Text>
+      <View style={defaultStyles.block}>
+        {currencies.data?.map((currency: Currency) => (
+          <Link key={currency.id} href={`/crypto/${currency.id}`} asChild>
+            <TouchableOpacity
+              key={currency.id}
+              style={{ flexDirection: 'row' }}
+            >
+              <Image
+                source={{ uri: data?.[currency.id].logo }}
+                style={{ width: 40, height: 40 }}
+              />
+              <View
+                style={{ flexDirection: 'column', marginLeft: 10, flex: 1 }}
+              >
+                <Text style={{ fontWeight: '600', color: Colors.dark }}>
+                  {currency.name}
+                </Text>
+                <Text style={{ color: Colors.gray }}>{currency.symbol}</Text>
+              </View>
+
+              <View style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
+                <Text style={{ color: Colors.dark, fontWeight: '600' }}>
+                  {Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'GHS',
+                  }).format(currency.quote.GHS.price)}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons
+                    name={
+                      currency.quote.GHS.percent_change_24h > 0
+                        ? 'arrow-up'
+                        : 'arrow-down'
+                    }
+                    size={16}
+                    color={
+                      currency.quote.GHS.percent_change_24h > 0
+                        ? 'green'
+                        : 'red'
+                    }
+                  />
+                  <Text style={{ color: Colors.gray }}>
+                    {currency.quote.GHS.percent_change_24h.toFixed(2)}%
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </Link>
+        ))}
+      </View>
+    </ScrollView>
   );
 };
 export default Page;

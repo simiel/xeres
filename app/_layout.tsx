@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import { Link, Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
@@ -142,6 +142,34 @@ const InitialLayout = () => {
       <Stack.Screen
         name='(authenticated)/(tabs)'
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name='(authenticated)/crypto/[id]'
+        options={{
+          title: '',
+          headerLeft: () => (
+            <TouchableOpacity onPress={router.back}>
+              <Ionicons name='arrow-back' size={34} />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity>
+                <Ionicons
+                  name='notifications-outline'
+                  size={34}
+                  color={Colors.dark}
+                  style={{ marginRight: 10 }}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Ionicons name='star-outline' size={34} color={Colors.dark} />
+              </TouchableOpacity>
+            </View>
+          ),
+          headerLargeTitle: true,
+          headerTransparent: true,
+        }}
       />
     </Stack>
   );
