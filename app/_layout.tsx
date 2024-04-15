@@ -178,6 +178,20 @@ const InitialLayout = () => {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name='(authenticated)/(modals)/account'
+        options={{
+          headerTitle: '',
+          headerTransparent: true,
+          presentation: 'transparentModal',
+          animation: 'fade',
+          headerLeft: () => (
+            <TouchableOpacity onPress={router.back}>
+              <Ionicons name='close-outline' size={34} color={'white'} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
     </Stack>
   );
 };
