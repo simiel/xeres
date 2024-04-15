@@ -36,7 +36,13 @@
           "origin": "https://simiel.github.io"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermision": "Please allow faceID permission"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

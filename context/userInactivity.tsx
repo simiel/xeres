@@ -27,15 +27,20 @@ export const UserInactivityProvider = ({ children }: any) => {
     console.log('🚀 ~ handleAppStateChange ~ nextAppState:', nextAppState);
     if (nextAppState === 'background') {
       recordStartTime();
-    } else if (nextAppState === 'active' && appState.current === 'background') {
+    } else if (nextAppState === 'active') {
       const startTime = storage.getNumber('startTime');
       if (startTime) {
         const currentTime = Date.now();
         const diff = currentTime - startTime;
         const inactivityTimeout = 1000 * 60 * 5; // 5 minutes
         console.log('🚀 ~ handleAppStateChange ~ diff:', diff);
-        if (diff > inactivityTimeout && isSignedIn) {
+        console.log('🚀 ~ handleAppStateChange ~ diff:', diff > 3000);
+
+        if (diff > 3000) {
+          console.log('🚀 ~ handleAppStateChange ~ redirecting');
           router.replace('/(authenticated)/(modals)/lock');
+        } else {
+          console.log('🚀 ~ handleAppStateChange ~ not redirecting');
         }
       }
     }
