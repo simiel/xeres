@@ -1,11 +1,27 @@
 import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { BlurView } from 'expo-blur';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { getAppIcon, setAppIcon } from 'expo-dynamic-app-icon';
+
+const ICONS = [
+  {
+    name: 'Default',
+    icon: require('@/assets/images/icon.png'),
+  },
+  {
+    name: 'Dark',
+    icon: require('@/assets/images/icon-dark.png'),
+  },
+  {
+    name: 'Vivid',
+    icon: require('@/assets/images/icon-vivid.png'),
+  },
+];
 
 const Page = () => {
   const { user } = useUser();
@@ -13,6 +29,17 @@ const Page = () => {
   const [firstName, setFirstName] = React.useState(user?.firstName);
   const [lastName, setLastName] = React.useState(user?.lastName);
   const [edit, setEdit] = React.useState(false);
+
+  const [activeIcon, setActiveIcon] = React.useState('Default');
+
+  useEffect(() => {
+    const getIcon = async () => {
+      const icon = getAppIcon();
+      console.log('🚀 ~ getIcon ~ icon:', activeIcon);
+      setActiveIcon(icon);
+    };
+    getIcon();
+  }, []);
 
   const onSaveUser = async () => {
     try {
@@ -41,6 +68,12 @@ const Page = () => {
         file: base64,
       });
     }
+  };
+
+  const onChangeIcon = async (icon: string) => {
+    console.log('🚀 ~ onChangeIcon ~ icon:', icon);
+    setAppIcon(icon.toLocaleLowerCase());
+    setActiveIcon(icon);
   };
 
   return (
@@ -87,7 +120,40 @@ const Page = () => {
         )}
       </View>
 
-      {/* Add logout */}
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.btn} onPress={() => signOut}>
+          <Ionicons name='log-out' size={24} color='white' />
+          <Text style={styles.actionText}>Logout</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btn}>
+          <Ionicons name='person' size={24} color='white' />
+          <Text style={styles.actionText}>Account</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btn}>
+          <Ionicons name='bulb' size={24} color='white' />
+          <Text style={styles.actionText}>Learn</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btn}>
+          <Ionicons name='megaphone' size={24} color='white' />
+          <Text style={styles.actionText}>Inbox</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.actions}>
+        {ICONS.map((icon) => (
+          <TouchableOpacity
+            key={icon.name}
+            style={styles.btn}
+            onPress={() => onChangeIcon(icon.name)}
+          >
+            <Image source={icon.icon} style={{ height: 20, width: 20 }} />
+            <Text style={styles.actionText}>{icon.name}</Text>
+            {activeIcon.toLowerCase() === icon.name.toLowerCase() && (
+              <Ionicons name='checkmark' size={24} color={'#fff'} />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
     </BlurView>
   );
 };
@@ -120,5 +186,20 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+  },
+  actions: {
+    backgroundColor: 'rgba(256, 256, 256, 0.1)',
+    borderRadius: 16,
+    gap: 0,
+    margin: 20,
+  },
+  btn: {
+    padding: 14,
+    flexDirection: 'row',
+    gap: 20,
+  },
+  actionText: {
+    color: 'white',
+    fontSize: 18,
   },
 });
