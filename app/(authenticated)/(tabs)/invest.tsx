@@ -179,18 +179,18 @@ const Page = () => {
       const points = [];
       let baseValue = 50;
       
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 8; i++) {
         let change = 0;
         if (trend === 'up') {
-          change = Math.random() * 8 - 2; // Mostly positive with some dips
+          change = Math.random() * 6 - 1; // Mostly positive with some dips
         } else if (trend === 'down') {
-          change = Math.random() * 8 - 6; // Mostly negative with some bumps
+          change = Math.random() * 6 - 5; // Mostly negative with some bumps
         } else {
-          change = Math.random() * 10 - 5; // Volatile
+          change = Math.random() * 8 - 4; // Volatile
         }
         
         baseValue += change;
-        baseValue = Math.max(10, Math.min(90, baseValue)); // Keep within bounds
+        baseValue = Math.max(20, Math.min(80, baseValue)); // Keep within bounds
         points.push(baseValue);
       }
       return points;
@@ -209,34 +209,74 @@ const Page = () => {
     const minValue = Math.min(...chartData);
     const range = maxValue - minValue || 1;
 
+    // Create SVG-like path points
+    const chartWidth = 50;
+    const chartHeight = 16;
+    
+    const pathPoints = chartData.map((value, index) => {
+      const x = (index / (chartData.length - 1)) * chartWidth;
+      const y = chartHeight - ((value - minValue) / range) * chartHeight;
+      return { x, y };
+    });
+
+    // Create line segments between points
+    const renderLineSegments = () => {
+      const segments = [];
+      for (let i = 0; i < pathPoints.length - 1; i++) {
+        const start = pathPoints[i];
+        const end = pathPoints[i + 1];
+        
+        // Calculate line angle and length
+        const deltaX = end.x - start.x;
+        const deltaY = end.y - start.y;
+        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+        
+        segments.push(
+          <View
+            key={i}
+            style={[
+              styles.chartLine,
+              {
+                position: 'absolute',
+                left: start.x,
+                top: start.y,
+                width: length,
+                height: 1.5,
+                backgroundColor: isPositive ? '#4CAF50' : '#F44336',
+                transform: [{ rotate: `${angle}deg` }],
+                transformOrigin: '0 50%',
+              }
+            ]}
+          />
+        );
+      }
+      return segments;
+    };
+
+    // Render point dots
+    const renderPoints = () => {
+      return pathPoints.map((point, index) => (
+        <View
+          key={index}
+          style={[
+            styles.chartDot,
+            {
+              position: 'absolute',
+              left: point.x - 1,
+              top: point.y - 1,
+              backgroundColor: isPositive ? '#4CAF50' : '#F44336',
+            }
+          ]}
+        />
+      ));
+    };
+
     return (
       <View style={styles.miniChart}>
         <View style={styles.chartContainer}>
-          {chartData.map((value, index) => {
-            const height = ((value - minValue) / range) * 16 + 2; // Scale to chart height
-            const left = (index / (chartData.length - 1)) * 50; // Distribute across width
-            
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.chartPoint,
-                  {
-                    height: height,
-                    left: left,
-                    backgroundColor: isPositive ? '#4CAF50' : '#F44336',
-                    bottom: 0,
-                  }
-                ]}
-              />
-            );
-          })}
-          
-          {/* Connect points with a line */}
-          <View style={[
-            styles.chartPath,
-            { backgroundColor: isPositive ? '#4CAF50' : '#F44336' }
-          ]} />
+          {renderLineSegments()}
+          {renderPoints()}
         </View>
       </View>
     );
@@ -690,17 +730,15 @@ const styles = StyleSheet.create({
     position: "relative",
     overflow: "hidden",
   },
-  chartPoint: {
+  chartLine: {
     position: "absolute",
-    width: 1.5,
     borderRadius: 1,
   },
-  chartPath: {
+  chartDot: {
+    width: 2,
+    height: 2,
+    borderRadius: 1,
     position: "absolute",
-    height: 1,
-    width: "100%",
-    top: "50%",
-    opacity: 0.3,
   },
   cryptoRight: {
     alignItems: "flex-end",
