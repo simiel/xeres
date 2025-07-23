@@ -151,7 +151,9 @@ const Page = () => {
             </View>
           </View>
 
-          <View style={styles.cryptoCenter}>{renderMiniChart()}</View>
+          <View style={styles.cryptoCenter}>
+            {renderMiniChart(crypto.isPositive, crypto.id)}
+          </View>
 
           <View style={styles.cryptoRight}>
             <Text style={styles.cryptoValue}>{crypto.value}</Text>
@@ -171,11 +173,74 @@ const Page = () => {
     </View>
   );
 
-  const renderMiniChart = () => (
-    <View style={styles.miniChart}>
-      <View style={styles.chartLine} />
-    </View>
-  );
+  const renderMiniChart = (isPositive: boolean, cryptoId: string) => {
+    // Generate realistic chart data points
+    const generateChartData = (trend: 'up' | 'down' | 'volatile') => {
+      const points = [];
+      let baseValue = 50;
+      
+      for (let i = 0; i < 12; i++) {
+        let change = 0;
+        if (trend === 'up') {
+          change = Math.random() * 8 - 2; // Mostly positive with some dips
+        } else if (trend === 'down') {
+          change = Math.random() * 8 - 6; // Mostly negative with some bumps
+        } else {
+          change = Math.random() * 10 - 5; // Volatile
+        }
+        
+        baseValue += change;
+        baseValue = Math.max(10, Math.min(90, baseValue)); // Keep within bounds
+        points.push(baseValue);
+      }
+      return points;
+    };
+
+    // Determine trend based on crypto performance
+    let trend: 'up' | 'down' | 'volatile' = 'volatile';
+    if (isPositive) {
+      trend = 'up';
+    } else {
+      trend = 'down';
+    }
+
+    const chartData = generateChartData(trend);
+    const maxValue = Math.max(...chartData);
+    const minValue = Math.min(...chartData);
+    const range = maxValue - minValue || 1;
+
+    return (
+      <View style={styles.miniChart}>
+        <View style={styles.chartContainer}>
+          {chartData.map((value, index) => {
+            const height = ((value - minValue) / range) * 16 + 2; // Scale to chart height
+            const left = (index / (chartData.length - 1)) * 50; // Distribute across width
+            
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.chartPoint,
+                  {
+                    height: height,
+                    left: left,
+                    backgroundColor: isPositive ? '#4CAF50' : '#F44336',
+                    bottom: 0,
+                  }
+                ]}
+              />
+            );
+          })}
+          
+          {/* Connect points with a line */}
+          <View style={[
+            styles.chartPath,
+            { backgroundColor: isPositive ? '#4CAF50' : '#F44336' }
+          ]} />
+        </View>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -617,11 +682,25 @@ const styles = StyleSheet.create({
     width: 60,
     height: 20,
     justifyContent: "center",
+    alignItems: "center",
   },
-  chartLine: {
-    height: 2,
-    backgroundColor: "#E0E0E0",
+  chartContainer: {
+    width: 54,
+    height: 18,
+    position: "relative",
+    overflow: "hidden",
+  },
+  chartPoint: {
+    position: "absolute",
+    width: 1.5,
     borderRadius: 1,
+  },
+  chartPath: {
+    position: "absolute",
+    height: 1,
+    width: "100%",
+    top: "50%",
+    opacity: 0.3,
   },
   cryptoRight: {
     alignItems: "flex-end",
